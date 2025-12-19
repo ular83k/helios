@@ -1,0 +1,226 @@
+HELIOS: Hub for Execution, Leads, Intelligence & Operations Systems
+
+The blueprint: TG Automation Platform
+
+One codebase. Many clients.
+Each client is just:
+
+.env
+
+client.yml (feature toggles + texts)
+
+optional connectors enabled
+
+Core idea
+
+Everything is a Module that exposes:
+
+routes() (TG handlers)
+
+jobs() (scheduled tasks)
+
+admin_actions() (buttons for owner)
+
+dependencies() (needs Sheets? CRM? Payments?)
+
+No module is allowed to hardcode business logic.
+
+Modules you should have (minimal but powerful)
+0) Foundation (mandatory)
+
+Auth & Roles
+
+user / admin / operator
+
+allowlist admins by TG ID
+
+Conversation Engine
+
+FSM router
+
+reusable “ask/validate/save” helpers
+
+Storage
+
+SQLite by default
+
+abstraction layer so you can swap to Postgres later
+
+Config & Feature Flags
+
+client.yml enables modules + settings
+
+1) Money modules (sell these first)
+
+Lead Capture
+
+buttons → questions → confirm
+
+push to Sheets/CRM
+
+notify owner
+
+FAQ / Menu
+
+editable from YAML
+
+quick replies
+
+Broadcast / Campaigns
+
+admin sends message to segment
+
+rate limiting + opt-out
+
+Booking
+
+simple: collect preferred slot + send to operator
+
+or integrate Calendly/Google Calendar later
+
+2) “Entrepreneur assistant” modules (upsell)
+
+Tasks & Reminders
+
+“add task”, “today list”
+
+daily digest to owner
+
+CRM Lite inside Telegram
+
+/leads list
+
+status: new → contacted → won/lost
+
+notes + follow-ups
+
+Analytics Dashboard
+
+leads/day, conversion, response time
+
+weekly PDF/report to owner (you can generate and send)
+
+3) Advanced modules (only when paid well)
+
+Payments
+
+invoice creation + webhook confirm
+
+unlock features after payment
+
+AI Copilot
+
+ONLY for internal use:
+
+rewrite reply
+
+summarize chat
+
+classify lead intent
+Don’t do “AI answers customers” until you have strong guardrails.
+
+Scrapers / Lead sourcing
+
+careful: legality + ethics
+
+better: “import leads from file” first
+
+Project structure (clean, scalable)
+app/
+  main.py
+  config/
+    loader.py
+    clients/
+      demo.yml
+      client_a.yml
+  core/
+    router.py
+    fsm.py
+    db.py
+    roles.py
+    admin_ui.py
+    scheduler.py
+    logging.py
+  modules/
+    faq/
+    leads/
+    booking/
+    broadcast/
+    tasks/
+    crm_lite/
+    payments/
+    ai_copilot/
+  connectors/
+    google_sheets.py
+    google_docs.py
+    crm_bitrix.py
+    crm_amo.py
+    payments_freedompay.py
+  templates/
+    messages.yml
+docker/
+  Dockerfile
+  docker-compose.yml
+
+Client config example (client.yml)
+brand:
+  name: "Clinic X"
+  main_menu:
+    - faq
+    - leads
+    - booking
+
+modules:
+  faq: true
+  leads: true
+  booking: true
+  broadcast: false
+  crm_lite: true
+  payments: false
+  ai_copilot: false
+
+leads:
+  fields: [name, phone, service, preferred_time]
+  target: google_sheets
+  notify_admin_chat_id: -100123456789
+
+faq:
+  source: "config/clients/clinicx_faq.yml"
+
+
+This is how you “assemble” solutions fast without rewriting code.
+
+Packaging (how you make quick money without custom hell)
+Package S — LeadBot (48 hours)
+
+FAQ + Lead capture + owner notifications + Sheets
+80k–120k KZT setup + 20k/mo
+
+Package M — LeadBot Pro (3–5 days)
+
+Booking + CRM-lite + Broadcast
+150k–300k KZT setup + 40k/mo
+
+Package L — Operator Suite (1–2 weeks)
+
+Payments + Analytics reports + AI copilot for admin
+400k+ KZT + 60k–120k/mo
+
+If they want “AI-agent that finds clients” but can’t pay Package L:
+they don’t want an agent — they want a miracle. Pass.
+
+Deployment (simple, profitable)
+
+You host on one VPS
+
+each client = one container
+
+daily backups
+
+You sell hosting as part of monthly support. That’s your compounding income.
+
+One more ruthless note
+
+Your “AI-agent for getting clients” idea is sexy… and usually a time-waster.
+Start with lead capture + CRM-lite + automation. That prints money now.
+Then add AI as an upsell once you have 2–3 paying clients and real data.
