@@ -1,0 +1,12 @@
+brand:
+  name: "HELIOS Demo"
+
+modules:
+  faq: true
+  leads: true
+  booking: false
+  broadcast: false
+  crm_lite: false
+  tasks: false
+  payments: false
+  ai_copilot: false

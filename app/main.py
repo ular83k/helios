@@ -1,0 +1,28 @@
+# app/main.py
+from __future__ import annotations
+
+from app.config.loader import get_client_name_from_env, load_client_config
+from app.modules.registry import build_default_registry
+
+
+def main() -> None:
+    client = get_client_name_from_env()
+    cfg = load_client_config(client)
+
+    registry = build_default_registry()
+    loaded = registry.load_from_flags(cfg.modules)
+
+    enabled = [m for m in loaded if m.enabled]
+    disabled = [m for m in loaded if not m.enabled]
+
+    print("HELIOS boot OK")
+    print(f"Client: {cfg.client_name}")
+    print(f"Available modules: {registry.available_names()}")
+    print(f"Enabled modules: {[m.name for m in enabled]}")
+    print(f"Disabled modules: {[m.name for m in disabled]}")
+
+    # Later: dependency checks, connector init, aiogram boot, scheduler boot
+
+
+if __name__ == "__main__":
+    main()
