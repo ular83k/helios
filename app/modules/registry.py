@@ -1,10 +1,22 @@
 # app/modules/registry.py
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Dict, List, Type
 
 from .base import Module
+
+#---- module registry ----
+from app.modules.faq.module import FaqModule
+from app.modules.leads.module import LeadsModule
+#---- module registry ----
+
+
+
+
+
+
 
 
 class RegistryError(RuntimeError):
