@@ -20,7 +20,7 @@ class Module(Protocol):
     """
     name: str
 
-    def routes(self) -> None:
+    def routes(self, dp) -> None:
         """Register Telegram routes later."""
         ...
 

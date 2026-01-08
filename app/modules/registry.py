@@ -56,23 +56,6 @@ class ModuleRegistry:
         return loaded
 
 
-# ---- demo modules (temporary) ----
-class FaqModule:
-    name = "faq"
-    def routes(self) -> None: ...
-    def jobs(self): return []
-    def admin_actions(self): return []
-    def dependencies(self): return []
-    def describe(self): return {"name": self.name, "desc": "FAQ/menu from YAML"}
-
-
-class LeadsModule:
-    name = "leads"
-    def routes(self) -> None: ...
-    def jobs(self): return []
-    def admin_actions(self): return []
-    def dependencies(self): return []
-    def describe(self): return {"name": self.name, "desc": "Lead capture flows"}
 
 
 def build_default_registry() -> ModuleRegistry:
