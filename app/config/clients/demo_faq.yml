@@ -1,0 +1,17 @@
+title: "FAQ"
+
+categories:
+  - id: services
+    title: "Services"
+    items:
+      - q: "What services do you provide?"
+        a: "We provide X, Y, Z."
+
+      - q: "Do you have delivery?"
+        a: "Yes. Delivery time: 30–60 minutes."
+
+  - id: pricing
+    title: "Pricing"
+    items:
+      - q: "How much does it cost?"
+        a: "Pricing depends on the service. Leave a request and we’ll confirm."

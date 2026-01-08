@@ -10,3 +10,6 @@ modules:
   tasks: false
   payments: false
   ai_copilot: false
+
+faq:
+  source: "app/config/clients/demo_faq.yml"

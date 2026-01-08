@@ -1,13 +1,16 @@
 #   app/modules/faq/module.py
 
 from __future__ import annotations
+
 from aiogram import Dispatcher
+from .handlers import register_faq
+
 
 class FaqModule:
     name = "faq"
 
     def routes(self, dp: Dispatcher) -> None:
-        pass
+        register_faq(dp)
 
     def jobs(self):
         return []
@@ -20,3 +23,4 @@ class FaqModule:
 
     def describe(self):
         return {"name": self.name, "desc": "FAQ/menu from YAML"}
+
