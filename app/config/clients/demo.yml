@@ -13,3 +13,7 @@ modules:
 
 faq:
   source: "app/config/clients/demo_faq.yml"
+
+leads:
+  fields: [name, phone, service, preferred_time]
+  notify_admin_ids: [1277000353]   # put your TG numeric ID here

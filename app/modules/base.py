@@ -4,6 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Protocol
 
+from aiogram import Dispatcher
+from app.core.context import RuntimeContext
 
 @dataclass(frozen=True)
 class AdminAction:
@@ -20,7 +22,7 @@ class Module(Protocol):
     """
     name: str
 
-    def routes(self, dp) -> None:
+    def routes(self, dp: Dispatcher, ctx: RuntimeContext) -> None:
         """Register Telegram routes later."""
         ...
 
