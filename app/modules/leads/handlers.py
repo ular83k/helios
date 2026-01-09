@@ -2,49 +2,61 @@
 
 from __future__ import annotations
 
-from typing import Dict, Any
+from typing import Any, Dict, List
 
-from aiogram import Dispatcher, Bot
+from aiogram import Dispatcher
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from app.config.loader import load_client_config, get_client_name_from_env
-from app.core.db.sqlite import SqliteDB
+from app.core.context import RuntimeContext
 from .repo import LeadsRepo
 
 
-# naive per-process state (MVP). Later: move to DB-backed FSM.
+# In-memory per-user state (MVP)
 _ACTIVE: Dict[int, Dict[str, Any]] = {}
 
 
-def _cfg() -> Dict[str, Any]:
-    cfg = load_client_config(get_client_name_from_env())
-    leads_cfg = cfg.raw.get("leads", {})
-    if not isinstance(leads_cfg, dict):
-        return {"fields": []}
-    return leads_cfg
+def _get_leads_cfg(ctx: RuntimeContext) -> Dict[str, Any]:
+    raw = ctx.config.raw.get("leads", {})
+    return raw if isinstance(raw, dict) else {}
 
 
-async def _notify_admins(bot: Bot, text: str) -> None:
-    leads_cfg = _cfg()
-    ids = leads_cfg.get("notify_admin_ids", [])
+def _get_fields(ctx: RuntimeContext) -> List[str]:
+    cfg = _get_leads_cfg(ctx)
+    fields = cfg.get("fields", [])
+    if not isinstance(fields, list):
+        return []
+    return [str(f).strip() for f in fields if str(f).strip()]
+
+
+def _format_summary(data: Dict[str, Any]) -> str:
+    lines = []
+    for k, v in data.items():
+        lines.append(f"{k}: {v}")
+    return "\n".join(lines)
+
+
+async def _notify_admins(ctx: RuntimeContext, text: str) -> None:
+    if not ctx.bot:
+        return
+    cfg = _get_leads_cfg(ctx)
+    ids = cfg.get("notify_admin_ids", [])
     if not isinstance(ids, list):
         return
     for admin_id in ids:
         try:
-            await bot.send_message(int(admin_id), text)
+            await ctx.bot.send_message(int(admin_id), text)
         except Exception:
-            # ignore for MVP (later log)
+            # MVP: ignore failures (later: log)
             pass
 
 
-def register_leads(dp: Dispatcher, db: SqliteDB) -> None:
-    repo = LeadsRepo(db)
+def register_leads(dp: Dispatcher, ctx: RuntimeContext) -> None:
+    repo = LeadsRepo(ctx.db)
 
     @dp.message(Command("lead"))
     async def lead_start(message: Message):
-        leads_cfg = _cfg()
-        fields = leads_cfg.get("fields", [])
+        fields = _get_fields(ctx)
         if not fields:
             await message.answer("Lead form is not configured.")
             return
@@ -56,36 +68,51 @@ def register_leads(dp: Dispatcher, db: SqliteDB) -> None:
         }
         await message.answer(f"Let's start. Enter {fields[0]}:")
 
+    @dp.message(Command("cancel"))
+    async def lead_cancel(message: Message):
+        if message.from_user.id in _ACTIVE:
+            _ACTIVE.pop(message.from_user.id, None)
+            await message.answer("Cancelled.")
+        else:
+            await message.answer("Nothing to cancel.")
+
     @dp.message()
-    async def lead_collect(message: Message, bot: Bot):
+    async def lead_collect(message: Message):
         st = _ACTIVE.get(message.from_user.id)
         if not st:
-            return  # ignore unrelated messages for now
+            return  # ignore unrelated messages
 
-        fields = st["fields"]
-        i = st["i"]
-        data = st["data"]
+        text = (message.text or "").strip()
+        if not text:
+            await message.answer("Please send text.")
+            return
 
-        # save answer
+        fields: List[str] = st["fields"]
+        i: int = st["i"]
+        data: Dict[str, Any] = st["data"]
+
         key = fields[i]
-        data[key] = message.text.strip()
+        data[key] = text
 
         i += 1
         if i >= len(fields):
-            # finalize
             lead_id = await repo.create_lead(
                 tg_user_id=message.from_user.id,
                 tg_username=message.from_user.username,
                 payload=data,
             )
-            del _ACTIVE[message.from_user.id]
+            _ACTIVE.pop(message.from_user.id, None)
 
-            summary = "\n".join([f"{k}: {v}" for k, v in data.items()])
+            summary = _format_summary(data)
             await message.answer(f"✅ Saved. Lead #{lead_id}\n\n{summary}")
 
-            await _notify_admins(bot, f"📩 New lead #{lead_id}\nUser: @{message.from_user.username or '—'} ({message.from_user.id})\n\n{summary}")
+            who = f"@{message.from_user.username}" if message.from_user.username else "—"
+            await _notify_admins(
+                ctx,
+                f"📩 New lead #{lead_id}\nUser: {who} ({message.from_user.id})\n\n{summary}",
+            )
             return
 
-        # ask next
         st["i"] = i
         await message.answer(f"Enter {fields[i]}:")
+
